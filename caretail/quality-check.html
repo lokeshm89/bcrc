@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quality Check | CaRetail</title>
+
+  <!-- Bootstrap -->
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/bootstrap-slider.css" rel="stylesheet">
+  <link href="css/app.css" rel="stylesheet">
+  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+  <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-sm-3 col-md-3 sidebar">
+        <div class="logo">
+         <img src="images/retail-icon.png" alt="Retail Store"  style="width:70px"/>
+        </div>
+        <ul>
+          <li>
+            <a href="#" class="active">Quality Check</a>
+          </li>
+        </ul>
+      </div>
+      <div class="col-sm-9 col-md-9 main">
+        <div class="sub-logo">
+          <img src="images/safe-food-logo.png" alt="CaRetail" /> SafeFoodChain</div>
+          <h4>Welcome Store Admin!</h4>
+        <table class="table table-bordered table-hover" id="quality-check">
+          <thead>
+            <tr>
+              <th>BatchId</th>
+              <th>Truck No</th>
+              <th>No. of Bottles</th>
+              <th>Status</th>
+              <th>Temperature When Shipped</th>
+              <th>Temperature When Delivered</th>
+              <th>Transport Time</th>
+            </tr>
+          </thead>
+          <tbody>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <footer><span>&copy; Copyright Royal Cyber Inc., 2018 | </span>
+    <ul>
+      <li><a href="#">Privacy Policy</a> |</li>
+      <li><a href="#">Terms and conditions</a></li>
+    </ul>
+  </footer>
+
+
+
+  <div class="modal fade" id="bid" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title" id="myModalLabel">Batch Transit Log</h4>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div>
+              <strong>Item Left the producer plant at: </strong>
+            </div>
+            <table class="table table-bordered table-hover" id="row1">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Temperature</th>
+                </tr>
+              </thead>
+              <tbody>
+
+              </tbody>
+            </table>
+            <div>
+              <strong>Item arrived this store at: </strong>
+            </div>
+            <table class="table table-bordered table-hover" id="row2">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Temperature</th>
+                </tr>
+              </thead>
+              <tbody>
+
+              </tbody>
+            </table>
+          </div>
+
+          <div class="row">
+            <div><p><h4>Do you want to accept this batch and add send payment to producer?</h4></p></div>
+            <div><p><small>*Accepting automatically mark this batch for sale. </small></p></div>
+            <div class="col-md-6 col-sm-6 col-xs-6">
+              <button class="btn btn-lg btn-primary btn-block" type="submit" data-action="accept">Accept</button>
+            </div>
+            <div class="col-md-6 col-sm-6 col-xs-6">
+              <button class="btn btn-lg btn-danger btn-block" type="submit" data-action="reject">Reject</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <input type="hidden" id="storeBatchId" value="" />
+  <script src="js/jquery.min.js"></script>
+  <script>
+
+
+    $('#bid').on('show.bs.modal', function (e) {
+
+        $('#storeBatchId').val($(e.relatedTarget).data('batchid'));
+        var trHTMLRow1 = '<tr><td>' + $(e.relatedTarget).data('row1-time') +
+          '</td><td>' + $(e.relatedTarget).data('row1-temp') +
+          '</td></tr>';
+        var trHTMLRow2 = '<tr><td>' + $(e.relatedTarget).data('row2-time') +
+          '</td><td>' + $(e.relatedTarget).data('row2-temp') +
+          '</td></tr>';
+        $('#row1 > tbody').empty();
+        $('#row1 > tbody').append(trHTMLRow1);
+        $('#row2 > tbody').empty();
+        $('#row2 > tbody').append(trHTMLRow2);    
+      });
+
+    var token = "";
+    function LoadData() {
+        $.ajax({
+            url: 'http://169.62.80.52:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org3.example.com&fcn=getAllRetailerBatches&args=%5B%22%22%5D',
+            type: 'GET',
+            dataType: 'json',
+            data: {},
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+            },
+            success: function (response) {
+                var trHTML = '';
+                $.each(response.Batches, function (i, item) {
+                    var arr=[];
+                    arr=item.transactions;
+                    console.log(response);
+                        trHTML += '<tr>' +
+                            '<td><a href="#" data-toggle="modal" data-target="#bid" data-batchId="'+item.batchId+'" data-row1-time="' + item.transactions[1].transTime + '" data-row1-temp="' + item.transactions[1].temprature + '" data-row2-time="'+arr[arr.length-1].transTime+'" data-row2-temp="'+ arr[arr.length-1].temprature +'" >' + item.batchId + '</a></td>' +
+                            '<td>' + arr[arr.length-1].transName +
+                            '</td><td>' + arr[1].noOfBottles +
+                            '</td><td>' + arr[arr.length-1].status +
+                            '</td><td>' + arr[1].temprature +
+                            '</td><td>' + arr[3].temprature +
+                            '</td><td>' + arr[3].transTime +
+                            '</td></tr>';
+                });
+
+                $('#quality-check > tbody').empty();
+                $('#quality-check > tbody').append(trHTML);
+
+
+            }, error: function (xr, exception) {
+                debugger;
+
+            }
+
+        });
+    }
+
+
+    function GenerateToken() {
+        $.ajax({
+            url: "http://169.62.80.52:4000/users",
+            type: "POST",
+            dataType: "json", // expected format for response
+            contentType: "application/x-www-form-urlencoded", // send as JSON
+            data: { username: "Atif", orgName: "Org3" },
+
+            success: function (data) {
+                token = data.token;
+                $("#process-input > tbody").empty();
+                LoadData();
+            },
+
+            error: function () {
+                //called when there is an error
+                alert('Please Refresh Application');
+            },
+        });
+    }
+    $(document).ready(function () {
+
+
+      GenerateToken();
+
+      $('.btn-block').on('click', function (e) {
+
+
+        var idVal = $('#storeBatchId').val();
+
+        $.ajax({
+          url: 'http://169.62.80.52:4000/channels/mychannel/chaincodes/mycc',
+          type: 'POST',
+          dataType: 'json',
+          traditional: true,
+          data: {
+            "peers": ["peer0.org3.example.com"],
+            "fcn": "retailerQualityCheck",
+            "args": [idVal, $(this).data('action')]
+          },
+          beforeSend: function (xhr) {
+            xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+          },
+          success: function (response) {
+
+          },
+          error: function (xr, exception) {
+            debugger;
+            if (xr.status == 200) {
+              LoadData();
+            } else {
+              alert('something went wrong');
+            }
+          }
+
+        });
+
+
+        $('#bid').modal('hide');
+
+
+      });
+
+    });
+  </script>
+  <!-- Include all compiled plugins (below), or include individual files as needed -->
+  <script src="js/bootstrap.min.js"></script>
+</body>
+
+</html>

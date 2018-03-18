@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Processing | Nutramigen</title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/app.css" rel="stylesheet">
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-3 col-md-3 sidebar">
+            <div class="logo"><img src="images/logo.png" alt="Nutramigen"/></div>
+
+            <ul>
+                <li><a href="home" class="active">Inventory</a></li>
+                <li><a href="processing">Process Milk</a></li>
+                <li><a href="transport">Submit Shipment</a></li>
+            </ul>
+
+        </div>
+        <div class="col-sm-9 col-md-9 main">
+            <div class="sub-logo"><img src="images/safe-food-logo.png" alt="Nutramigen"/> SafeFoodChain</div>
+            <button class="btn btn-lg btn-secondary pull-right action-btn" data-toggle="modal" data-target="#process">
+                Add
+            </button>
+            <table class="table table-bordered table-hover" id="process-input">
+                <thead>
+                <tr>
+                    <th>BatchId</th>
+                    <th>Pasteurization</th>
+                    <th>Adulteration</th>
+                    <th>Temprature</th>
+                    <th>Status</th>
+                </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="process" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="myModalLabel">New Processing Input</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+
+                    <label for="" class="sr-only">BatchId</label>
+                    <input type="" class="form-control" id="txt_id" placeholder="BatchId">
+                </div>
+                <div class="form-group">
+                    <label for="" class="sr-only">pasteurization</label>
+                    <input type="" class="form-control" id="txt_past" placeholder="pasteurization">
+                </div>
+                <div class="form-group">
+                    <label for="" class="sr-only">Adulteration</label>
+                    <input type="" class="form-control" id="txt_adult" placeholder="Adulteration">
+                </div>
+
+                <div class="form-group">
+                    <label for="" class="sr-only">Temprature</label>
+                    <input type="" class="form-control" id="txt_temp" placeholder="Temprature">
+                </div>
+                <button class="btn btn-lg btn-secondary btn-block" type="submit">Add</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="js/jquery.min.js"></script>
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="js/bootstrap.min.js"></script>
+<script>
+    var token = "";
+    $(document).ready(function () {
+        function LoadData() {
+            $.ajax({
+                url: 'http://169.62.80.52:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=getAllProcessingBatches&args=%5B%22%22%5D',
+                type: 'GET',
+                dataType: 'json',
+                data: {},
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                },
+                success: function (response) {
+                    var trHTML = '';
+
+                    //alert(response.Batches[1].farm)
+                    $.each(response.Batches, function (i, item) {
+                        $.each(item.transactions, function (j, jItem) {
+                            if (jItem.status == "In Process") {
+
+                                trHTML += '<tr><td>' + item.batchId + '</td><td>' + jItem.pasturization +
+                                    '</td><td>' + jItem.adulteration +
+                                    '</td><td>' + jItem.temprature +
+                                    '</td><td>' + item.batchStatus
+                                '</td></tr>';
+                            }
+                        });
+                    });
+
+                    $('#process-input > tbody').empty();
+                    $('#process-input > tbody').append(trHTML);
+                }
+            });
+        }
+
+        function GenerateToken() {
+            $.ajax({
+                url: "http://169.62.80.52:4000/users",
+                type: "POST",
+                dataType: "json", // expected format for response
+                contentType: "application/x-www-form-urlencoded", // send as JSON
+                data: {username: "Jim", orgName: "Org1"},
+
+                success: function (data) {
+                    //called when successful
+                    //alert(data.token);
+                    token = data.token;
+                    $("#process-input > tbody").empty();
+                    LoadData();
+                },
+
+                error: function () {
+                    //called when there is an error
+                    alert('Please Refresh Application');
+                },
+            });
+        }
+
+
+        GenerateToken();
+
+
+        $('.btn-block').on('click', function () {
+            debugger;
+
+            var idVal = $("#txt_id")[0].value;
+            var pastVal = $("#txt_past")[0].value;
+            var adultVal = $("#txt_adult")[0].value;
+            var tempVal = $("#txt_temp")[0].value;
+
+
+            $.ajax({
+                url: 'http://169.62.80.52:4000/channels/mychannel/chaincodes/mycc',
+                type: 'POST',
+                dataType: 'json',
+                traditional: true,
+                data: {
+                    "peers": ["peer0.org1.example.com"],
+                    "fcn": "addProccesingInput",
+                    "args": [idVal, pastVal, adultVal, tempVal]
+                },
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                },
+                success: function (response) {
+                    alert('sucess');
+                },
+                error: function (xr, exception) {
+                    debugger;
+                    if (xr.status == 200) {
+                        LoadData();
+                    } else if (xr.status == 0) {
+                        alert("This batchId does not exists in Manufacturer product list or already in process");
+                    } else {
+                        alert('something went wrong');
+                    }
+                }
+
+            });
+
+
+            $('#process').modal('hide');
+
+
+        });
+
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Transport Status | Traxpert</title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <!--  <link href="css/bootstrap-slider.css" rel="stylesheet"> -->
+    <link rel="stylesheet" href="css/jquery.range.css">
+    <link href="css/app.css" rel="stylesheet">
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <style>
+    </style>
+</head>
+
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-3 col-md-3 sidebar">
+            <div class="logo">
+                <img src="images/transport-icon.png" alt="Traxpert"/>
+            </div>
+            <ul>
+                <li>
+                    <a href="transport.html" class="active">DashBoard</a>
+                </li>
+            </ul>
+        </div>
+        <div class="col-sm-9 col-md-9 main">
+            <div class="sub-logo">
+                <img src="images/safe-food-logo.png" alt="Traxpert"/> SafeFoodChain
+            </div>
+            <table class="table table-bordered table-hover" id="traxpert">
+                <thead>
+                <tr>
+
+                    <th>BatchId</th>
+                    <th>Truck No</th>
+                    <th>No. of Bottles</th>
+                    <th>Status</th>
+                    <th>Avg. Temperature</th>
+                    <th>IOT simulator</th>
+                </tr>
+                </thead>
+                <tbody>
+
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="bid" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="myModalLabel">Currently Delivering</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="txt_batchId">BatchID</label>
+                    <input type="text" class="form-control" readonly id="txt_batchId" placeholder="BatchId">
+                </div>
+                <div class="form-group">
+                    <label for="txt_noOfBottle">No. Of Bottles in This Batch</label>
+                    <input type="text" class="form-control" readonly id="txt_noOfBottle" placeholder="No. of Bottles">
+                </div>
+                <div class="form-group">
+                    <label for="txt_currentTemp">Current Refrigerator Temperature in the Vehicle</label>
+                    <input type="text" class="form-control" readonly id="txt_currentTemp" placeholder="Refrigerator Temp">
+                </div>
+                <div class="wrapper" style="text-align: center;">
+                    <button class="btn btn-lg btn-secondary btn-block" type="submit" style="max-width: 40%;">Deliver</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="js/jquery.min.js"></script>
+
+<script src="js/jquery.range.js"></script>
+<script src="js/bootstrap-slider.js"></script>
+<script>
+    // With JQuery
+    // $('.slider-input').jRange({
+    //     from: -30,
+    //     to: 30,
+    //     step: 1,
+    //     scale: [-30, 0, 30],
+    //     format: '%s',
+    //     width: 450,
+    //     showLabels: true,
+    //     snap: true
+    // });
+
+    var token = "";
+
+    function LoadData() {
+        $.ajax({
+            url: 'http://169.62.80.52:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org2.example.com&fcn=getAllTransporterBatches&args=%5B%22%22%5D',
+            type: 'GET',
+            dataType: 'json',
+            data: {},
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+            },
+            success: function (response) {
+                debugger;
+                var trHTML = '';
+                $.each(response.Batches, function (i, item) {
+                    var arr = [];
+                    arr = item.transactions;
+                    if (true) {
+
+                        trHTML += '<tr><td><a href="#" data-toggle="modal" data-target="#bid" data-batchId=' + item.batchId + ' data-noOfBottle=' + arr[arr.length - 1].noOfBottles + '>' + item.batchId + '</a></td><td>' + arr[arr.length - 1].transName +
+                            '</td><td>' + arr[arr.length - 1].noOfBottles +
+                            '</td><td>' + arr[arr.length - 1].tpStatus +
+                            '</td><td>' + arr[arr.length - 1].temprature +
+                            '</td><td>Icon thermometer'
+                        '</td></tr>';
+                    }
+                    //});
+                });
+
+                $('#traxpert > tbody').empty();
+                $('#traxpert > tbody').append(trHTML);
+            }
+        });
+    }
+
+    function GenerateToken() {
+        $.ajax({
+            url: "http://169.62.80.52:4000/users",
+            type: "POST",
+            dataType: "json", // expected format for response
+            contentType: "application/x-www-form-urlencoded", // send as JSON
+            data: {username: "Kim", orgName: "Org2"},
+
+            success: function (data) {
+                //called when successful
+                //alert(data.token);
+                token = data.token;
+                $("#process-input > tbody").empty();
+                LoadData();
+            },
+
+            error: function () {
+                //called when there is an error
+                alert('Please Refresh Application');
+            },
+        });
+    }
+
+    function saveToLedger() {
+        var idVal = $("#txt_batchId")[0].value;
+        var noOfBottleVal = $("#txt_noOfBottle")[0].value;
+        var scaleTempVal = $("#txt_currentTemp")[0].value;
+
+        $.ajax({
+            url: 'http://169.62.80.52:4000/channels/mychannel/chaincodes/mycc',
+            type: 'POST',
+            dataType: 'json',
+            traditional: true,
+            data: {
+                "peers": ["peer0.org2.example.com"],
+                "fcn": "addIOTResults",
+                "args": [idVal, noOfBottleVal, scaleTempVal]
+            },
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+            },
+            success: function (response) {
+                $('#bid').modal('hide');
+            },
+            error: function (xr, exception) {
+                if (xr.status == 200) {
+                    LoadData();
+                } else if (xr.status == 0) {
+                    alert("This batch already delivered or rejected");
+                } else {
+                    alert('something went wrong');
+                }
+            }
+
+        });
+    }
+
+    function getRandomInt(max) {
+        return Math.floor(Math.random() * Math.floor(max));
+    }
+
+    $(document).ready(function () {
+        $('#bid').on('show.bs.modal', function (e) {
+            $('#txt_batchId').val($(e.relatedTarget).data('batchid'));
+            $('#txt_noOfBottle').val($(e.relatedTarget).data('noofbottle'));
+            $('#txt_currentTemp').val(getRandomInt(13));
+
+        });
+
+        GenerateToken();
+        $('.btn-block').on('click', saveToLedger);
+    });
+</script>
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="js/bootstrap.min.js"></script>
+</body>
+
+</html>

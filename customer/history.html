@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Transport Status | Traxpert</title>
+
+    <!-- Bootstrap -->
+    <link href="public/css/bootstrap.min.css" rel="stylesheet">
+    <!--  <link href="css/bootstrap-slider.css" rel="stylesheet"> -->
+    <link rel="stylesheet" href="css/jquery.range.css">
+    <link href="css/app.css" rel="stylesheet">
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <style>
+    .main{background: #f4f4f4;padding: 10px;}
+    #heading { color: #259ac6; }
+    .cards .card { background-color: #fff;  min-height: 200px; margin-bottom: 20px; position: relative;color: #636164;}
+    .cards .card .card-img {min-height: 50px;}
+    .cards .card .card-img img { position: absolute; top: 5%; border: 1px solid #ccc; border-radius: 25%; padding: 10px; background: #fff; left: 35%; }
+    .cards .card .border-line { border-bottom: 1px solid #ccc; padding-top: 60px; display: block;}
+    .cards .card p{padding: 10px 10px 20px; text-align: center;}
+    .loading {position: fixed; z-index: 1000; top: 0;left: 0; height: 100%; width: 100%;background: rgba( 0, 0, 0, .8 )        url('images/loading.gif') 50% 50% no-repeat;}
+    </style>
+</head>
+
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-12 col-md-12 main">
+            <div>
+                <div id="heading"><h3>Lorem ipsum dolor sit amet</h3></div>
+                <div class="container">
+                    <div class="row cards">
+                        <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                            <div id="manufactured" class="card" style="background: linear-gradient(to bottom, #33ccff 0% , #ffffff 100%);">
+                                <span class="border-line"></span>
+                                <div class="card-img"><img src="images/manufactured.png" class="img-responsive" /></div>
+                                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam elementum lacus ac dapibus congue.</p>                                
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                            <div id="pasturized" class="card" style="background: linear-gradient(to bottom, #33ccff 20%, #ffffff 100%);">
+                                <span class="border-line"></span>
+                                <div class="card-img"><img src="images/pasturized.png" class="img-responsive" /></div>
+                                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam elementum lacus ac dapibus congue.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                            <div id="left" class="card" style="background: linear-gradient(to bottom, #33ccff 40%, #ffffff 100%);">
+                                <span class="border-line"></span>
+                                <div class="card-img"><img src="images/left.png" class="img-responsive" /></div>
+                                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam elementum lacus ac dapibus congue.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                            <div id="arrived" class="card" style="background: linear-gradient(to bottom, #33ccff 60%, #ffffff 100%);">
+                                <span class="border-line"></span>
+                                <div class="card-img"><img src="images/arrived.png" class="img-responsive" /></div>
+                                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam elementum lacus ac dapibus congue.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+                            <div id="sale" class="card" style="background: linear-gradient(to bottom, #00cc99 4%, #ffffff 100%);">
+                                <span class="border-line"></span>
+                                <div class="card-img"><img src="images/sale.png" class="img-responsive" /></div>
+                                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam elementum lacus ac dapibus congue.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                
+                
+                
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="loading"></div>
+
+<script src="js/jquery.min.js"></script>
+<script src="js/jquery.range.js"></script>
+<script src="js/bootstrap-slider.js"></script>
+<script>
+    var ledgerArray = "";
+
+    function GetHistory(token) {
+        $.ajax({
+            url: 'http://169.62.80.52:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org3.example.com&fcn=getAllConsumerBatches&args=%5B%22%22%5D',
+            type: 'GET',
+            dataType: 'json',
+            data: {},
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+            },
+            success: function (response) {
+                var responseArray = response.Batches;
+                ledgerArray = responseArray;
+                populateHistory();
+
+            }
+        });
+    }
+
+    (function ($) {
+        $.fn.selected = function (fn) {
+            return this.each(function () {
+                $(this).focus(function () {
+                    this.dataChanged = false;
+                }).change(function () {
+                    this.dataChanged = true;
+                    fn(this);
+                });
+            });
+        };
+    })(jQuery);
+
+    function GenerateToken() {
+        var token = "";
+        $.ajax({
+            url: "http://169.62.80.52:4000/users",
+            type: "POST",
+            dataType: "json", // expected format for response
+            contentType: "application/x-www-form-urlencoded", // send as JSON
+            data: {username: "Atif", orgName: "Org3"},
+            success: function (data) {
+                this.token = data.token;
+                GetHistory(this.token);
+            },
+            error: function () {
+                alert('Please Refresh Application');
+            },
+        });
+    }
+
+    function populateHistory() {
+        console.log(ledgerArray);
+        var a = window.location.href.split('/');
+        var batch = ledgerArray[0];
+         var stmt = "Showing History of Batch: " + a[3];
+        $("#heading > h3").text(stmt);
+        stmt = "This milk was produced at " + batch.farm + " on " + batch.transactions[0].transTime + ".";
+        $("#manufactured > p").text(stmt);
+        stmt = "This milk was pastuerized on " + batch.transactions[1].transTime + ". Pasturization value is " + batch.transactions[1].pasturization + ".";
+        $("#pasturized > p").text(stmt);
+        stmt = "This milk was adulterated on " + batch.transactions[1].transTime + ". Adulteration value is " + batch.transactions[1].adulteration + ".";
+        $("#adulterated > p").text(stmt);
+        stmt = "This milk left " + batch.farm + " on " + batch.transactions[2].transTime + " with a refrigirating condition of " + batch.transactions[1].temprature + " Fahernhit which is an acceptable temperature.";
+        $("#left > p").text(stmt);
+        stmt = "This milk arrived this store on " + batch.transactions[3].transTime + " with a refrigirating condition of " + batch.transactions[3].temprature + " Fahernhit which is an acceptable temperature.";
+        $("#arrived > p").text(stmt);
+        stmt = "This milk marked for sale on " + batch.transactions[4].transTime + ".";
+        $("#sale > p").text(stmt);
+
+
+    }
+
+    $(document).ready(function () {
+        GenerateToken();
+    });
+</script>
+<script src="js/bootstrap.min.js"></script>
+</body>
+
+</html>
